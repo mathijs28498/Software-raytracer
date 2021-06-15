@@ -10,6 +10,8 @@
 
 # define PI           3.14159265358979323846  /* pi */
 
+#define MAX_RAY_DEPTH 0
+
 constexpr int WIDTH = 500;
 constexpr int HEIGHT = 500;
 
@@ -91,13 +93,80 @@ public:
 	}
 };
 
-void rayTrace0(std::vector<Sphere>* spheres, Sphere* light, HDC* hdc) {
+Color traceMine(std::vector<Sphere>* spheres, Sphere* light, Ray& ray, int depth) {
+	float minDist = 2000000;
+	Color endColor;
+
+	Sphere* hitSphere = nullptr;
+	Vec3 intersec;
+	Vec3 lightDir;
+	Vec3 normal;
+	size_t sphereIndex;
+
+	for (size_t i = 0; i < spheres->size(); i++) {
+		Sphere* sphere = &(*spheres)[i];
+		float dist;
+		if (sphere->intersect(ray, dist) && dist < minDist) {
+			minDist = dist;
+
+			intersec = ray.origin + ray.dir * dist;
+			lightDir = (light->center - intersec).normalize();
+			normal = sphere->getNormal(intersec);
+
+			hitSphere = sphere;
+			sphereIndex = i;
+		}
+	}
+
+	if (hitSphere == nullptr)
+		return Color();
+
+
+
+	Ray shadowRay{ intersec, lightDir };
+
+	for (size_t i = 0; i < spheres->size(); i++) {
+		if (i == sphereIndex) continue;
+		Sphere sphere = (*spheres)[i];
+		float tempDist;
+		if (sphere.intersect(shadowRay, tempDist)) {
+			return Color();
+		}
+	}
+
+
+
+	float strength = dot(shadowRay.dir, normal.normalize());
+
+	endColor = hitSphere->color * 0.7f + light->color * strength * 1.1f;
+
+	if (depth < MAX_RAY_DEPTH) {
+		// compute reflection
+		Vec3 reflectionDir = ray.dir - normal * 2 * dot(ray.dir, normal);
+		Ray reflectionRay{ intersec, -reflectionDir.normalize() };
+		// recurse
+		Color reflectionColor = traceMine(spheres, light, reflectionRay, depth + 1);
+		endColor = endColor + reflectionColor;
+	}
+
+	if (endColor.rgb.x < 0) endColor.rgb.x = 0;
+	if (endColor.rgb.y < 0) endColor.rgb.y = 0;
+	if (endColor.rgb.z < 0) endColor.rgb.z = 0;
+	if (endColor.rgb.x > 255) endColor.rgb.x = 255;
+	if (endColor.rgb.y > 255) endColor.rgb.y = 255;
+	if (endColor.rgb.z > 255) endColor.rgb.z = 255;
+
+	return endColor;
+
+}
+
+
+void rayTraceScratch(std::vector<Sphere>* spheres, Sphere* light, HDC* hdc) {
 	std::vector<Color> pixels(HEIGHT * WIDTH);
 
 	float imagePlaneRatio = WIDTH / imagePlaneWidth;
 	Vec3 cameraPosition{ 0, 0, 10 };
 	bool firstLoop = true;
-
 	while (true) {
 		for (int y = 0; y < HEIGHT; y++) {
 			for (int x = 0; x < WIDTH; x++) {
@@ -106,116 +175,10 @@ void rayTrace0(std::vector<Sphere>* spheres, Sphere* light, HDC* hdc) {
 
 				Vec3 imagePlanePoint{ xc / imagePlaneRatio, yc / imagePlaneRatio, -10 };
 
-
 				Vec3 direction = (imagePlanePoint - cameraPosition).normalize();
 				Ray primaryRay{ cameraPosition, direction };
 
-
-
-				float minDist = 2000000;
-				Color endColor;
-				for (size_t i = 0; i < spheres->size(); i++) {
-					Sphere sphere = (*spheres)[i];
-					float dist;
-					if (sphere.intersect(primaryRay, dist) && dist < minDist) {
-						minDist = dist;
-
-						Vec3 intersec = primaryRay.origin + primaryRay.dir * dist;
-						Vec3 lightDir = (light->center - intersec).normalize();
-						Vec3 normal = sphere.getNormal(intersec);
-
-						float strength = dot(lightDir.normalize(), normal.normalize());
-
-						endColor = sphere.color * 0.7f + light->color * strength * 1.1f;
-
-						if (endColor.rgb.x < 0) endColor.rgb.x = 0;
-						if (endColor.rgb.y < 0) endColor.rgb.y = 0;
-						if (endColor.rgb.z < 0) endColor.rgb.z = 0;
-						if (endColor.rgb.x > 255) endColor.rgb.x = 255;
-						if (endColor.rgb.y > 255) endColor.rgb.y = 255;
-						if (endColor.rgb.z > 255) endColor.rgb.z = 255;
-					}
-				}
-				if (!(endColor == pixels[y * WIDTH + x]) || firstLoop) {
-					SetPixel(*hdc, x, y, RGB(endColor.rgb.x, endColor.rgb.y, endColor.rgb.z));
-					pixels[y * WIDTH + x] = endColor;
-				}
-			}
-		}
-		//cameraPosition = cameraPosition + Vec3{ 0, 1, 0 };
-		//spheres[0].center = spheres[0].center + Vec3{ -2, 0, 0 };
-		firstLoop = false;
-		//std::fill(pixels.begin(), pixels.end(), Color());
-	}
-}
-
-void rayTrace1(std::vector<Sphere>* spheres, Sphere* light, HDC* hdc) {
-	std::vector<Color> pixels(HEIGHT * WIDTH);
-
-	float imagePlaneRatio = WIDTH / imagePlaneWidth;
-	Vec3 cameraPosition{ 0, 0, 10 };
-	bool firstLoop = true;
-	while (true) {
-		for (int y = 0; y < HEIGHT; y++) {
-			for (int x = 0; x < WIDTH; x++) {
-				float xc = x - WIDTH / 2;
-				float yc = y - HEIGHT / 2;
-
-				Vec3 imagePlanePoint{ xc / imagePlaneRatio, yc / imagePlaneRatio, -10 };
-
-				Vec3 direction = (imagePlanePoint - cameraPosition).normalize();
-				Ray primaryRay{ cameraPosition, direction };
-				float minDist = 2000000;
-				Color endColor;
-
-				Sphere* hitSphere = nullptr;
-				Vec3 intersec;
-				Vec3 normal;
-				size_t sphereIndex;
-
-				for (size_t i = 0; i < spheres->size(); i++) {
-					Sphere* sphere = &(*spheres)[i];
-					float dist;
-					if (sphere->intersect(primaryRay, dist) && dist < minDist) {
-						minDist = dist;
-
-						intersec = primaryRay.origin + primaryRay.dir * dist;
-						Vec3 lightDir = (light->center - intersec).normalize();
-						normal = sphere->getNormal(intersec);
-
-						hitSphere = sphere;
-						sphereIndex = i;
-					}
-				}
-
-				if (hitSphere != nullptr) {
-					Ray shadowRay{ intersec ,(light->center - intersec).normalize() };
-					bool isShadow = false;
-
-					for (size_t i = 0; i < spheres->size(); i++) {
-						if (i == sphereIndex) continue;
-						Sphere sphere = (*spheres)[i];
-						float tempDist;
-						if (sphere.intersect(shadowRay, tempDist)) {
-							isShadow = true;
-							break;
-						}
-					}
-
-					if (!isShadow) {
-						float strength = dot(shadowRay.dir, normal.normalize());
-
-						endColor = hitSphere->color * 0.7f + light->color * strength * 1.1f;
-
-						if (endColor.rgb.x < 0) endColor.rgb.x = 0;
-						if (endColor.rgb.y < 0) endColor.rgb.y = 0;
-						if (endColor.rgb.z < 0) endColor.rgb.z = 0;
-						if (endColor.rgb.x > 255) endColor.rgb.x = 255;
-						if (endColor.rgb.y > 255) endColor.rgb.y = 255;
-						if (endColor.rgb.z > 255) endColor.rgb.z = 255;
-
-					}
-				}
+				Color endColor = traceMine(spheres, light, primaryRay, 0);
 
 				if (!(endColor == pixels[y * WIDTH + x]) || firstLoop) {
 					SetPixel(*hdc, x, y, RGB(endColor.rgb.x, endColor.rgb.y, endColor.rgb.z));
@@ -223,26 +186,34 @@ void rayTrace1(std::vector<Sphere>* spheres, Sphere* light, HDC* hdc) {
 				}
 			}
 		}
-
-		(*spheres)[0].center = (*spheres)[0].center + Vec3{1, 0, 0};
 		firstLoop = false;
+		(*spheres)[0].center = (*spheres)[0].center + Vec3(1, 0, 0);
 	}
-
-
 }
 
-int main() {
+
+int maain() {
 
 	HDC hdc = GetDC(GetConsoleWindow());
 
 	std::vector<Sphere> spheres{
-		{ {0, 0, -5}, 10, {{255, 0, 255}}  },
+		/*{ {0, 0, -25}, 10, {{255, 0, 255}}  },
 		{ {10, 20, -20}, 20, {{0, 255, 0}} },
-		{ {-10, -20, -30}, 25, {{255, 255, 0}} },
+		{ {-10, -20, -40}, 25, {{255, 255, 0}} },
+		{ {0, -80, -10}, 400, {{0, 0, 255}} },*/
+		{{0.0, -10004, -20}, 10000, {{ 0.20, 0.20, 0.20 }}},
+		{{ 0.0, 0, -20 }, 4, {{ 1.00, 0.32, 0.36 }}},
+		{{ 5.0, -1, -15 }, 2, {{ 0.90, 0.76, 0.46 }}},
+		{{ 5.0, 0, -25 }, 3, {{ 0.65, 0.77, 0.97 }}},
+		{{ -5.5, 0, -15 }, 3, {{ 0.90, 0.90, 0.90 }}},
 	};
+		// light
+		//spheres.push_back(Sphere(Vec3f(0.0, 20, -30), 3, Vec3f(0.00, 0.00, 0.00), 0, 0.0, Vec3f(3)));
 
-	Sphere light{ {10, 0, 10}, 5, {{255, 255, 255}} };
+	//Sphere light{ {10, 0, 10}, 5, {{255, 255, 255}} };
 
-	rayTrace1(&spheres, &light, &hdc);
+	Sphere light{ { 0.0, 20, 0}, 3, {{0.00, 0.00, 0.00}} };
+
+	rayTraceScratch(&spheres, &light, &hdc);
 	return 0;
 }
