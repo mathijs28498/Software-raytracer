@@ -363,3 +363,4 @@ FodyWeavers.xsd
 
 # Exclude libraries folder
 libraries/
+output/
