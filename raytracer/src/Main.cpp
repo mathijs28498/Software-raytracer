@@ -214,6 +214,6 @@ int maain() {
 
 	Sphere light{ { 0.0, 20, 0}, 3, {{0.00, 0.00, 0.00}} };
 
-	rayTraceScratch(&spheres, &light, &hdc);
+	//rayTraceScratch(&spheres, &light, &hdc);
 	return 0;
 }

@@ -15,6 +15,14 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\headers\dataClasses.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\mainMine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\newMain\Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

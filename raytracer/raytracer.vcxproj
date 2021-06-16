@@ -19,6 +19,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\headers\dataClasses.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\mainMine.cpp" />
     <ClCompile Include="src\newMain\Main.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
