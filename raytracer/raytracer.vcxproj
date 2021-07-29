@@ -22,8 +22,7 @@
     <ClInclude Include="src\headers\dataClasses.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\mainMine.cpp" />
-    <ClCompile Include="src\newMain\Main.cpp" />
+    <ClCompile Include="src\Main.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
