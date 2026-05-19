@@ -132,30 +132,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
-//int main() {
-//	//H/*WND hwnd = GetConsoleWindow();
-//	//printf("hwnd=%p\n", hwnd);
-//
-//	//HDC hdc = GetDC(hwnd);
-//	//printf("hdc=%p\n", hdc);
-//	//RECT rc;
-//	//GetClientRect(hwnd, &rc);
-//	//p*/rintf("client=%ld x %ld\n", rc.right - rc.left, rc.bottom - rc.top);
-//
-//	//HWND hwnd = GetConsoleWindow();
-//	//HDC hdc = GetDC(hwnd);
-//	//SetPixel(hdc, 100, 100, RGB(255, 0, 0));
-//	//ReleaseDC(hwnd, hdc);
-//	//Sleep(5000);
-//	HDC hdc = GetDC(GetConsoleWindow());
-//
-//	while (true) {
-//		startRaytrace(cameraPos, hdc, &spheres, light);
-//		//cameraPos.x += 1;
-//		spheres[1].center.x--;
-//	}
-//}
-
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
 	WNDCLASSEX wc = {};
 	wc.cbSize = sizeof(WNDCLASSEX);
@@ -179,7 +155,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
 	while (GetMessage(&msg, NULL, 0, 0)) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
-		InvalidateRect(hwnd, NULL, FALSE); // Triggers WM_PAINT again = animation loop
+		InvalidateRect(hwnd, NULL, FALSE);
 	}
 	return 0;
 }
