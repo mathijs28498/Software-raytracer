@@ -19,6 +19,17 @@ constexpr int WIDTH = 500, HEIGHT = 500;
 constexpr float INV_WIDTH = 1.0f / WIDTH, INV_HEIGHT = 1.0f / HEIGHT;
 constexpr float ASPECT_RATIO = float(WIDTH) / HEIGHT;
 
+Vec3 cameraPos(0, 0, 0);
+std::vector<Sphere> spheres{
+	Sphere(Vec3(0.0, -10004, -20), 10000, Vec3(0.20, 0.50, 0.80)),
+	Sphere(Vec3(0.0, 0, -20), 4, Vec3(1.00, 0.32, 0.36)),
+	Sphere(Vec3(5.0, -1, -15), 2, Vec3(0.90, 0.76, 0.46)),
+	Sphere(Vec3(5.0, 0, -25), 3, Vec3(0.65, 0.77, 0.97)),
+	Sphere(Vec3(-5.5, 0, -15), 3, Vec3(0.90, 0.90, 0.90))
+};
+// light
+Sphere light(Vec3(20, 5, -10), 3, Vec3(0.00, 0.00, 0.00));
+
 Vec3 trace(Ray& ray, std::vector<Sphere>* spheres, const Sphere& light, const int& depth) {
 	Sphere* hitSphere = nullptr;
 	float minDist = INFINITY;
@@ -99,21 +110,76 @@ void startRaytrace(Vec3& cameraPos, const HDC& hdc, std::vector<Sphere>* spheres
 
 }
 
-int main() {
-	HDC hdc = GetDC(GetConsoleWindow());
-	std::vector<Sphere> spheres{
-		Sphere(Vec3(0.0, -10004, -20), 10000, Vec3(0.20, 0.50, 0.80)),
-		Sphere(Vec3(0.0, 0, -20), 4, Vec3(1.00, 0.32, 0.36)),
-		Sphere(Vec3(5.0, -1, -15), 2, Vec3(0.90, 0.76, 0.46)),
-		Sphere(Vec3(5.0, 0, -25), 3, Vec3(0.65, 0.77, 0.97)),
-		Sphere(Vec3(-5.5, 0, -15), 3, Vec3(0.90, 0.90, 0.90))
-	};
-	// light
-	Sphere light(Vec3(20, 5, -10), 3, Vec3(0.00, 0.00, 0.00));
-	Vec3 cameraPos(0, 0, 0);
-	while (true) {
+
+LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+	switch (msg) {
+	case WM_PAINT: {
+		PAINTSTRUCT ps;
+		HDC hdc = BeginPaint(hwnd, &ps);
+
+		// Your raytracer draws here
+		// You'll need to pass your scene data in somehow (globals work fine)
 		startRaytrace(cameraPos, hdc, &spheres, light);
-		//cameraPos.x += 1;
 		spheres[1].center.x--;
+
+		EndPaint(hwnd, &ps);
+		break;
 	}
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		return 0;
+	}
+	return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+//int main() {
+//	//H/*WND hwnd = GetConsoleWindow();
+//	//printf("hwnd=%p\n", hwnd);
+//
+//	//HDC hdc = GetDC(hwnd);
+//	//printf("hdc=%p\n", hdc);
+//	//RECT rc;
+//	//GetClientRect(hwnd, &rc);
+//	//p*/rintf("client=%ld x %ld\n", rc.right - rc.left, rc.bottom - rc.top);
+//
+//	//HWND hwnd = GetConsoleWindow();
+//	//HDC hdc = GetDC(hwnd);
+//	//SetPixel(hdc, 100, 100, RGB(255, 0, 0));
+//	//ReleaseDC(hwnd, hdc);
+//	//Sleep(5000);
+//	HDC hdc = GetDC(GetConsoleWindow());
+//
+//	while (true) {
+//		startRaytrace(cameraPos, hdc, &spheres, light);
+//		//cameraPos.x += 1;
+//		spheres[1].center.x--;
+//	}
+//}
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
+	WNDCLASSEX wc = {};
+	wc.cbSize = sizeof(WNDCLASSEX);
+	wc.lpfnWndProc = WndProc;
+	wc.hInstance = hInstance;
+	wc.lpszClassName = L"RayTracerClass";
+	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+	RegisterClassEx(&wc);
+
+	HWND hwnd = CreateWindowEx(
+		0, L"RayTracerClass", L"Ray Tracer",
+		WS_OVERLAPPEDWINDOW,
+		CW_USEDEFAULT, CW_USEDEFAULT, WIDTH, HEIGHT,
+		NULL, NULL, hInstance, NULL
+	);
+
+	ShowWindow(hwnd, nCmdShow);
+	UpdateWindow(hwnd);
+
+	MSG msg = {};
+	while (GetMessage(&msg, NULL, 0, 0)) {
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+		InvalidateRect(hwnd, NULL, FALSE); // Triggers WM_PAINT again = animation loop
+	}
+	return 0;
 }
