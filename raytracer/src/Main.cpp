@@ -117,8 +117,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hwnd, &ps);
 
-		// Your raytracer draws here
-		// You'll need to pass your scene data in somehow (globals work fine)
 		startRaytrace(cameraPos, hdc, &spheres, light);
 		spheres[1].center.x--;
 
